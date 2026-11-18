@@ -1,0 +1,53 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Node
+node_modules/
+stockai/node_modules/
+stockai/.next/
+stockai/out/
+stockai/build/
+stockai/dist/
+.pnpm-store/
+
+# Env/secrets - never copy real secrets into image, use --env-file
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Model artifacts - large, not needed for frontend build; backend will copy explicitly if needed
+model_artifacts/
+backend/model_artifacts/
+*.pkl
+*.joblib
+
+# IDE/OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+*.log
+logs/
+coverage/
+.nyc_output/

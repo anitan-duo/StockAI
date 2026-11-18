@@ -1,0 +1,94 @@
+name: stockai-ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: stockai
+          POSTGRES_PASSWORD: stockai
+          POSTGRES_DB: stockai
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      valkey:
+        image: valkey/valkey:8-alpine
+        ports:
+          - 6379:6379
+    env:
+      DATABASE_URL: postgresql+asyncpg://stockai:stockai@localhost:5432/stockai
+      VALKEY_URL: redis://localhost:6379/0
+      SECRET_KEY: ci-only-test-secret-key-at-least-32-chars
+      DEBUG: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install backend
+        run: |
+          pip install -e ./backend
+          pip install pytest pytest-asyncio ruff
+      - name: Migrate test database
+        run: PYTHONPATH=backend alembic -c backend/database/migrations/alembic.ini upgrade head
+      - name: Backend tests (full suite)
+        run: PYTHONPATH=backend pytest backend/tests -q
+      - name: Ruff correctness checks
+        run: ruff check --select F,E9 backend/services backend/apps backend/packages backend/tests
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: stockai/package-lock.json
+      - run: npm ci --prefix stockai
+      - run: npx tsc --noEmit --project tsconfig.json
+        working-directory: stockai
+      - run: npm run build
+        working-directory: stockai
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start stack
+        run: |
+          cp .env.example .env
+          python3 -c "import secrets; print('SECRET_KEY=' + secrets.token_urlsafe(48))" >> .env
+          docker compose up -d --build postgres valkey api frontend
+      - name: Wait for API
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8000/api/v1/health/live && break || sleep 10;
+          done
+          curl -sf http://localhost:8000/api/v1/health/ready
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: stockai/package-lock.json
+      - run: npm ci --prefix stockai
+      - run: npx playwright install --with-deps chromium
+        working-directory: stockai
+      - run: npx playwright test --project=chromium
+        working-directory: stockai
+        env:
+          E2E_BASE_URL: http://localhost:3000
+          E2E_API_URL: http://localhost:8000/api/v1
+      - name: Stop stack
+        if: always()
+        run: docker compose down

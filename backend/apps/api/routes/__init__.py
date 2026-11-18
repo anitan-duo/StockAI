@@ -1,0 +1,31 @@
+from apps.api.routes import (
+    alerts,
+    analytics,
+    auth,
+    backtests,
+    health,
+    markets,
+    mlops,
+    predictions,
+    rankings,
+    scenarios,
+    screener,
+    training,
+    watchlist,
+)
+
+__all__ = [
+    "health",
+    "auth",
+    "markets",
+    "predictions",
+    "rankings",
+    "screener",
+    "training",
+    "watchlist",
+    "alerts",
+    "backtests",
+    "mlops",
+    "scenarios",
+    "analytics",
+]
