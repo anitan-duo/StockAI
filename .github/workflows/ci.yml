@@ -39,10 +39,38 @@ jobs:
         run: |
           pip install -e ./backend
           pip install pytest pytest-asyncio ruff
-      - name: Migrate test database
-        run: PYTHONPATH=backend alembic -c backend/database/migrations/alembic.ini upgrade head
-      - name: Backend tests (full suite)
-        run: PYTHONPATH=backend pytest backend/tests -q
+      - name: SQLite unit, ML and backtesting tests
+        working-directory: backend
+        env:
+          STOCKAI_TEST_MODE: sqlite
+          DATABASE_URL: sqlite+aiosqlite:////tmp/stockai_ci.db
+          STOCKAI_TEST_DB_PATH: /tmp/stockai_ci.db
+          SECRET_KEY: stockai-test-secret-key-0123456789abcdef
+        run: python tests/run_tests.py sqlite
+      - name: Prepare isolated PostgreSQL integration database
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+asyncpg://stockai:stockai@localhost:5432/stockai_test
+          STOCKAI_TEST_MODE: postgres
+          SECRET_KEY: stockai-test-secret-key-0123456789abcdef
+          PGPASSWORD: stockai
+          VALKEY_URL: redis://localhost:6379/0
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y postgresql-client
+          psql -h localhost -U stockai -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE stockai_test"
+          alembic -c database/migrations/alembic.ini upgrade head
+          python tests/fixtures_seed.py
+      - name: PostgreSQL integration tests
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+asyncpg://stockai:stockai@localhost:5432/stockai_test
+          STOCKAI_TEST_MODE: postgres
+          SECRET_KEY: stockai-test-secret-key-0123456789abcdef
+          VALKEY_URL: redis://localhost:6379/0
+          REDIS_URL: redis://localhost:6379/0
+        run: pytest tests/integration tests/test_backtesting.py::TestBacktestValidation -q
       - name: Ruff correctness checks
         run: ruff check --select F,E9 backend/services backend/apps backend/packages backend/tests
 
