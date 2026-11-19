@@ -7,8 +7,6 @@ const password = 'E2e-test-123';
 test.describe('StockAI smoke', () => {
   test('registration → dashboard', async ({ page }) => {
     await page.goto('/signup');
-    const fullName = page.locator('#fullName');
-    if (await fullName.count()) await fullName.fill('E2E User');
     await page.locator('#email').fill(email);
     await page.locator('#password').fill(password);
     const confirm = page.locator('#confirmPassword');
@@ -22,12 +20,23 @@ test.describe('StockAI smoke', () => {
     await request.post(`${API}/auth/register`, {
       data: { email: lemail, password, full_name: 'Login User' },
     });
-    await page.goto('/login');
+    await page.goto('/login?callbackUrl=https%3A%2F%2Fevil.example%2Fphish');
     await page.locator('#email').fill(lemail);
     await page.locator('#password').fill(password);
     await page.locator('form button[type="submit"]').click();
     await expect(page).toHaveURL(/dashboard/, { timeout: 15000 });
     await expect(page.locator('body')).toContainText(/dashboard|markets|watchlist/i);
+    await expect(page).toHaveURL(/dashboard/); // External callback URLs must be rejected.
+
+    const refreshToken = await page.evaluate(() => localStorage.getItem('refresh_token'));
+    expect(refreshToken).toBeTruthy();
+    await page.getByRole('button', { name: /user menu/i }).click();
+    await page.getByRole('menuitem', { name: /log out/i }).click();
+    await expect(page).toHaveURL(/login/, { timeout: 15000 });
+    const refreshAfterLogout = await request.post(`${API}/auth/refresh`, {
+      data: { refresh_token: refreshToken },
+    });
+    expect(refreshAfterLogout.status()).toBe(401); // Logout must revoke the refresh token server-side.
   });
 
   test('invalid login shows error, no session', async ({ page }) => {
