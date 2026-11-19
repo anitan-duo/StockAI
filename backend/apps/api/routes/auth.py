@@ -171,8 +171,11 @@ async def forgot_password(
     session: AsyncSession = Depends(get_session),
 ) -> dict[str, str]:
     """Request password reset (anti-enumeration: always generic; email sending not configured)."""
-    # Email delivery is not configured in this deployment; do not enumerate accounts.
-    return {"message": "If the email exists, a password reset link has been sent"}
+    # Do not claim that an email was sent when no delivery/token flow exists.
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="Password reset is not configured in this deployment",
+    )
 
 
 @router.post("/reset-password")
