@@ -21,7 +21,7 @@ const loginSchema = z.object({
 });
 
 function getSafeCallbackUrl(candidate: string | null): string {
-  if (!candidate || !candidate.startsWith('/') || candidate.startsWith('//') || candidate.includes('\\\\')) {
+  if (!candidate || !candidate.startsWith('/') || candidate.startsWith('//') || candidate.includes('\\')) {
     return '/dashboard';
   }
   try {
