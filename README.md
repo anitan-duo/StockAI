@@ -26,7 +26,7 @@ AI-powered stock market analysis and probabilistic prediction platform. Statical
 ## Architecture
 
 ```
-├── stockai/          # Next.js 15 frontend (standalone)
+├── stockai/          # Next.js 16 frontend (standalone)
 │   ├── src/app/      # App Router pages: /, /dashboard, /markets, /stocks/[symbol], /predictions, /screener, /watchlist, /backtesting, /research, /settings, /login, /signup
 │   └── src/components/ # shadcn + base-ui, price charts via lightweight-charts v5 (candles/OHLC/line/area/baseline + volume + RSI/MACD/Stoch/ATR/RelVol from src/lib/indicators), backtest curves via Recharts
 └── backend/           # FastAPI + SQLAlchemy 2.0 + Alembic + Valkey
@@ -88,7 +88,8 @@ cp .env.example .env   # fill FINNHUB/ALPHAVANTAGE/TWELVEDATA keys, set SECRET_K
 docker compose up -d postgres valkey
 docker compose exec postgres pg_isready -U stockai
 docker compose up -d --build api frontend
-docker compose ps # postgres healthy, valkey healthy, api healthy (curl /api/v1/health/live), frontend 3000
+# The one-shot migrate service applies Alembic migrations before the API starts.
+docker compose ps # migrate exited 0, postgres/valkey/api healthy, frontend 3000
 ```
 
 Frontend uses `context: ./stockai` (not root) and `.dockerignore` excludes `node_modules/.next/.git/.venv/model_artifacts` → context ~10 MB not 1.28 GB.
