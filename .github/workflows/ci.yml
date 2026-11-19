@@ -1,5 +1,9 @@
 name: stockai-ci
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
   pull_request:
@@ -31,8 +35,8 @@ jobs:
       SECRET_KEY: ci-only-test-secret-key-at-least-32-chars
       DEBUG: "false"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.11"
       - name: Install backend
@@ -78,10 +82,10 @@ jobs:
   frontend:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
           cache-dependency-path: stockai/package-lock.json
       - run: npm ci --prefix stockai
@@ -93,7 +97,7 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Start stack
         run: |
           cp .env.example .env
@@ -105,9 +109,9 @@ jobs:
             curl -sf http://localhost:8000/api/v1/health/live && break || sleep 10;
           done
           curl -sf http://localhost:8000/api/v1/health/ready
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
-          node-version: "20"
+          node-version: "22"
           cache: npm
           cache-dependency-path: stockai/package-lock.json
       - run: npm ci --prefix stockai
