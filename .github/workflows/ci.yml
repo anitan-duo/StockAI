@@ -102,7 +102,11 @@ jobs:
         run: |
           cp .env.example .env
           python3 -c "import secrets; print('SECRET_KEY=' + secrets.token_urlsafe(48))" >> .env
-          docker compose -f docker-compose.yml -f .github/e2e-compose.yml up -d --build postgres valkey api frontend
+          if ! docker compose -f docker-compose.yml -f .github/e2e-compose.yml up -d --build postgres valkey api frontend; then
+            docker compose -f docker-compose.yml -f .github/e2e-compose.yml ps -a
+            docker compose -f docker-compose.yml -f .github/e2e-compose.yml logs --no-color migrate seed-e2e api postgres valkey
+            exit 1
+          fi
       - name: Wait for API
         run: |
           for i in $(seq 1 30); do
