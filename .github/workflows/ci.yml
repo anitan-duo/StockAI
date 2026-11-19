@@ -17,7 +17,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U stockai -d stockai"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -45,6 +45,7 @@ jobs:
           STOCKAI_TEST_MODE: sqlite
           DATABASE_URL: sqlite+aiosqlite:////tmp/stockai_ci.db
           STOCKAI_TEST_DB_PATH: /tmp/stockai_ci.db
+          STOCKAI_SQLITE_DB_PATH: /tmp/stockai_ci.db
           SECRET_KEY: stockai-test-secret-key-0123456789abcdef
         run: python tests/run_tests.py sqlite
       - name: Prepare isolated PostgreSQL integration database
