@@ -89,6 +89,10 @@ jobs:
           cache: npm
           cache-dependency-path: stockai/package-lock.json
       - run: npm ci --prefix stockai
+      - run: npm run test:unit
+        working-directory: stockai
+      - run: npm run lint
+        working-directory: stockai
       - run: npx tsc --noEmit --project tsconfig.json
         working-directory: stockai
       - run: npm run build
