@@ -24,7 +24,11 @@ async def health_check() -> dict[str, Any]:
 
 @router.get("/ready")
 async def readiness_check(session: AsyncSession = Depends(get_session)) -> JSONResponse:
-    """Readiness check - verifies database and provider connectivity."""
+    """Verify database readiness and report provider configuration without probing vendors.
+
+    Provider health checks can consume rate-limited API calls, so this endpoint
+    deliberately distinguishes configured providers from verified connectivity.
+    """
     checks = {}
     overall_healthy = True
 
@@ -45,9 +49,18 @@ async def readiness_check(session: AsyncSession = Depends(get_session)) -> JSONR
         # Check if any provider is configured
         total_providers = sum(len(v) for v in router.providers.values())
         if total_providers > 0:
-            checks["provider"] = {"status": "healthy", "providers": total_providers, "markets": list(router.providers.keys())}
+            checks["provider"] = {
+                "status": "configured",
+                "connectivity_verified": False,
+                "providers": total_providers,
+                "markets": list(router.providers.keys()),
+            }
         else:
-            checks["provider"] = {"status": "not_configured", "provider": "none"}
+            checks["provider"] = {
+                "status": "not_configured",
+                "connectivity_verified": False,
+                "provider": "none",
+            }
     except Exception:
         import logging
 
