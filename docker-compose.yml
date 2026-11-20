@@ -33,6 +33,9 @@ services:
   # idempotent Alembic job; it never creates or seeds market data.
   migrate:
     image: stockai-api:local
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: stockai-migrate
     env_file:
       - path: .env
