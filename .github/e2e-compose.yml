@@ -1,0 +1,42 @@
+# CI-only overlay. All data is synthetic and isolated in stockai_test.
+# Never use this file for a developer or production deployment.
+services:
+  postgres:
+    environment:
+      POSTGRES_DB: stockai_test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U stockai -d stockai_test"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    environment:
+      DATABASE_URL: postgresql+asyncpg://stockai:stockai@postgres:5432/stockai_test
+
+  seed-e2e:
+    image: stockai-api:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stockai-seed-e2e
+    environment:
+      DATABASE_URL: postgresql+asyncpg://stockai:stockai@postgres:5432/stockai_test
+      STOCKAI_TEST_MODE: postgres
+      SECRET_KEY: stockai-test-secret-key-0123456789abcdef
+      VALKEY_URL: redis://valkey:6379/0
+      REDIS_URL: redis://valkey:6379/0
+    volumes:
+      - ./backend/tests/fixtures_seed.py:/app/tests/fixtures_seed.py:ro
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    command: ["python", "/app/tests/fixtures_seed.py"]
+    restart: "no"
+
+  api:
+    environment:
+      DATABASE_URL: postgresql+asyncpg://stockai:stockai@postgres:5432/stockai_test
+    depends_on:
+      seed-e2e:
+        condition: service_completed_successfully

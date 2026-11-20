@@ -89,6 +89,20 @@ def test_login_generic_error_detail():
     assert exc.value.detail == "Invalid credentials"
 
 
+
+
+def test_forgot_password_reports_not_implemented_without_claiming_delivery():
+    with pytest.raises(HTTPException) as exc:
+        asyncio.run(
+            auth_route.forgot_password(
+                MagicMock(email="u@example.com"),
+                MagicMock(),
+            )
+        )
+    assert exc.value.status_code == 501
+    assert "not configured" in exc.value.detail.lower()
+
+
 def test_register_generic_error_detail():
     async def boom(*a, **kw):
         raise ValueError("Email already registered")

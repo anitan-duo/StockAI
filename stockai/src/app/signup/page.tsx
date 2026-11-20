@@ -19,13 +19,17 @@ const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   confirmPassword: z.string(),
-  fullName: z.string().min(1, 'Full name is required').max(255).optional(),
+  fullName: z.preprocess(
+    (value) => (typeof value === 'string' && value.trim() === '' ? undefined : value),
+    z.string().trim().min(1, 'Full name cannot be blank').max(255).optional(),
+  ),
 }).refine((data) => data.password === data.confirmPassword, {
   message: 'Passwords do not match',
   path: ['confirmPassword'],
 });
 
-type SignupForm = z.infer<typeof signupSchema>;
+type SignupFormInput = z.input<typeof signupSchema>;
+type SignupForm = z.output<typeof signupSchema>;
 
 export default function SignupPage() {
   const router = useRouter();
@@ -37,7 +41,7 @@ export default function SignupPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<SignupForm>({
+  } = useForm<SignupFormInput, unknown, SignupForm>({
     resolver: zodResolver(signupSchema),
   });
 

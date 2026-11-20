@@ -19,6 +19,10 @@ FROM python:3.11-slim AS production
 
 WORKDIR /app
 
+# Ensure application packages remain importable from CLI entrypoints (Alembic,
+# Uvicorn and one-shot fixture seeding) regardless of their script directory.
+ENV PYTHONPATH=/app
+
 # Install runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \

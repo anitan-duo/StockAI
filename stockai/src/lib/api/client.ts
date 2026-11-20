@@ -200,10 +200,19 @@ class ApiClient {
   }
 
   async logout() {
-    await this.request('/auth/logout', {
-      method: 'POST',
-    });
-    this.clearTokens();
+    const refreshToken =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('refresh_token')
+        : this.refreshToken;
+    try {
+      await this.request('/auth/logout', {
+        method: 'POST',
+        headers: refreshToken ? { 'X-Refresh-Token': refreshToken } : {},
+      });
+    } finally {
+      // Always clear local credentials, even if the API is temporarily unavailable.
+      this.clearTokens();
+    }
   }
 
   async refresh() {

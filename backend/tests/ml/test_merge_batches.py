@@ -9,6 +9,9 @@ from pathlib import Path
 
 def _load_merger():
     path = Path(__file__).resolve().parents[2] / "scripts" / "merge_dev_batches.py"
+    if not path.exists():
+        import pytest
+        pytest.skip("Private research batch merger is not distributed in the public repository")
     spec = importlib.util.spec_from_file_location("merge_dev_batches", path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)

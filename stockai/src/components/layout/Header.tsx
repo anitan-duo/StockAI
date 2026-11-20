@@ -254,7 +254,7 @@ export function Header() {
             <div className="h-8 w-8 rounded-full bg-slate-200 dark:bg-slate-700 animate-pulse" />
           ) : user ? (
             <DropdownMenu>
-              <DropdownMenuTrigger render={<Button variant="ghost" className="relative h-8 w-8 rounded-full" />}>
+              <DropdownMenuTrigger render={<Button variant="ghost" aria-label="User menu" className="relative h-8 w-8 rounded-full" />}>
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || user.email)}`} />
                     <AvatarFallback>{user.name?.charAt(0) || user.email.charAt(0)}</AvatarFallback>

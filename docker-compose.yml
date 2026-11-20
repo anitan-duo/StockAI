@@ -29,7 +29,27 @@ services:
       timeout: 5s
       retries: 5
 
+  # Apply schema changes before the API accepts traffic. This is a one-shot,
+  # idempotent Alembic job; it never creates or seeds market data.
+  migrate:
+    image: stockai-api:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: stockai-migrate
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      DATABASE_URL: postgresql+asyncpg://stockai:stockai@postgres:5432/stockai
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: ["alembic", "-c", "database/migrations/alembic.ini", "upgrade", "head"]
+    restart: "no"
+
   api:
+    image: stockai-api:local
     build:
       context: .
       dockerfile: Dockerfile
@@ -48,12 +68,14 @@ services:
       LOG_LEVEL: INFO
       LOG_FORMAT: json
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     depends_on:
       postgres:
         condition: service_healthy
       valkey:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     volumes:
       - ./model_artifacts:/app/model_artifacts:ro
       - ./backend/model_artifacts:/app/backend/model_artifacts:ro
@@ -75,7 +97,7 @@ services:
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     depends_on:
       api:
         condition: service_healthy

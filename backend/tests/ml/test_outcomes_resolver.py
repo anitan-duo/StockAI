@@ -38,7 +38,10 @@ async def _seed_matured(db_session, *, base: str, nxt: str):
     db_session.add(version)
     await db_session.flush()
 
-    base_ts = now - timedelta(days=5)
+    # Anchor the fixture on Thursday -> Friday so both dates are trading days
+    # in every timezone and across every weekday the CI job happens to run.
+    days_since_thursday = (now.weekday() - 3) % 7
+    base_ts = now - timedelta(days=days_since_thursday or 7)
     nxt_ts = base_ts + timedelta(days=1)
     db_session.add(
         PriceBar(

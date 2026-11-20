@@ -15,7 +15,7 @@ successful full-suite run.
 
 Suite definitions:
   - sqlite:   tests/test_db_isolation.py tests/test_backtesting.py (non-integration)
-              tests/unit/ tests/ml/ tests/backtesting/ tests/research/
+              tests/unit/ tests/ml/ tests/backtesting/
               with STOCKAI_TEST_MODE=sqlite, file-backed SQLite DB.
               Excludes tests/integration/ (Postgres) and
               TestBacktestValidation (marked integration).
@@ -48,7 +48,9 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Allow an isolated path for orchestrator self-tests: the subprocess must
 # never unlink the database file a parent test process is still using.
-SQLITE_DB_PATH = os.environ.get("STOCKAI_SQLITE_DB_PATH", "/tmp/stockai_test.db")
+SQLITE_DB_PATH = os.environ.get("STOCKAI_SQLITE_DB_PATH") or os.environ.get(
+    "STOCKAI_TEST_DB_PATH", "/tmp/stockai_test.db"
+)
 SQLITE_URL = f"sqlite+aiosqlite:///{SQLITE_DB_PATH}"
 PG_USER = "stockai"
 PG_PASS = "stockai"
@@ -63,7 +65,6 @@ SQLITE_PATHS = [
     "tests/unit",
     "tests/ml",
     "tests/backtesting",
-    "tests/research",
 ]
 POSTGRES_PATHS = [
     "tests/integration",

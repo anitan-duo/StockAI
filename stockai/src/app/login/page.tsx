@@ -20,10 +20,23 @@ const loginSchema = z.object({
   rememberMe: z.boolean().optional(),
 });
 
+function getSafeCallbackUrl(candidate: string | null): string {
+  if (!candidate || !candidate.startsWith('/') || candidate.startsWith('//') || candidate.includes('\\')) {
+    return '/dashboard';
+  }
+  try {
+    const destination = new URL(candidate, window.location.origin);
+    if (destination.origin !== window.location.origin) return '/dashboard';
+    return `${destination.pathname}${destination.search}${destination.hash}`;
+  } catch {
+    return '/dashboard';
+  }
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+  const callbackUrl = getSafeCallbackUrl(searchParams.get('callbackUrl'));
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
