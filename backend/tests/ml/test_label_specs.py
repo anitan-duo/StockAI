@@ -79,6 +79,8 @@ def _load_runner():
     from pathlib import Path
 
     path = Path(__file__).resolve().parents[2] / "scripts" / "run_holdout_evaluation.py"
+    if not path.exists():
+        pytest.skip("Private holdout evaluation runner is not distributed in the public repository")
     spec = importlib.util.spec_from_file_location("run_holdout_evaluation", path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
