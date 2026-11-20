@@ -28,7 +28,8 @@ const signupSchema = z.object({
   path: ['confirmPassword'],
 });
 
-type SignupForm = z.infer<typeof signupSchema>;
+type SignupFormInput = z.input<typeof signupSchema>;
+type SignupForm = z.output<typeof signupSchema>;
 
 export default function SignupPage() {
   const router = useRouter();
@@ -40,7 +41,7 @@ export default function SignupPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<SignupForm>({
+  } = useForm<SignupFormInput, unknown, SignupForm>({
     resolver: zodResolver(signupSchema),
   });
 
