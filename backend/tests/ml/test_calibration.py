@@ -78,9 +78,7 @@ def test_no_future_target_in_features():
 
 def test_brier_is_multiclass_mean():
     """4. Brier score is documented as multiclass mean of per-class one-vs-rest."""
-    p = pathlib.Path("backend/model_artifacts/ensemble/v1.0/calibration_metrics.json")
-    if not p.exists():
-        p = pathlib.Path("model_artifacts/ensemble/v1.0/calibration_metrics.json")
+    p = _require_calibration_file()
     data = json.loads(p.read_text())
     # brier_score should be mean of per-class
     assert "brier_score" in data
@@ -92,9 +90,7 @@ def test_brier_is_multiclass_mean():
 
 def test_ece_is_mean_of_per_class():
     """5. ECE is calculated as mean of per-class ECE or top-class, documented."""
-    p = pathlib.Path("backend/model_artifacts/ensemble/v1.0/calibration_metrics.json")
-    if not p.exists():
-        p = pathlib.Path("model_artifacts/ensemble/v1.0/calibration_metrics.json")
+    p = _require_calibration_file()
     data = json.loads(p.read_text())
     assert "ece" in data
     assert "ece_per_class" in data
@@ -107,9 +103,7 @@ def test_ece_is_mean_of_per_class():
 
 def test_calibration_output_includes_version_and_count():
     """6. Calibration output includes model version and sample count."""
-    p = pathlib.Path("backend/model_artifacts/ensemble/v1.0/calibration_metrics.json")
-    if not p.exists():
-        p = pathlib.Path("model_artifacts/ensemble/v1.0/calibration_metrics.json")
+    p = _require_calibration_file()
     data = json.loads(p.read_text())
     assert "model_version" in data
     assert data["model_version"] == "real-v1.0"
