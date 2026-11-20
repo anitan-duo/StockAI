@@ -16,6 +16,9 @@ services:
 
   seed-e2e:
     image: stockai-api:local
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: stockai-seed-e2e
     environment:
       DATABASE_URL: postgresql+asyncpg://stockai:stockai@postgres:5432/stockai_test
