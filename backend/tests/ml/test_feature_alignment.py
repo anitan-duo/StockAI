@@ -164,16 +164,11 @@ async def test_insufficient_data_produces_error():
         fake_id = uuid.uuid4()
         import pathlib, joblib
 
-        feat_names = None
-        for p in [
-            pathlib.Path("model_artifacts/real/ensemble/v1.0/model.pkl"),
-            pathlib.Path("backend/model_artifacts/ensemble/v1.0/model.pkl"),
-        ]:
-            if p.exists():
-                data = joblib.load(p)
-                feat_names = data.get("features") or data.get("feature_names")
-                break
-        assert feat_names is not None
+        # The public repository intentionally excludes the private champion
+        # artifact. Derive the feature contract from the same deterministic
+        # pipeline instead of requiring private weights just to test the
+        # insufficient-history guard.
+        feat_names = list(FeaturePipeline().compute_all_features(_make_ohlcv(400)).columns)
         engine = PredictionEngine(session)
         try:
             await engine._extract_unified_features(fake_id, feat_names, "1d")
